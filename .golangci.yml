@@ -1,0 +1,138 @@
+linters-settings:
+  govet:
+    check-shadowing: true
+    enable:
+      - fieldalignment
+    settings:
+      printf:
+        funcs:
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Infof
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Warnf
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Errorf
+          - (github.com/golangci/golangci-lint/pkg/logutils.Log).Fatalf
+  golint:
+    min-confidence: 0
+  gocyclo:
+    min-complexity: 35
+  maligned:
+    suggest-new: true
+  dupl:
+    threshold: 100
+  goconst:
+    min-len: 2
+    min-occurrences: 2
+  depguard:
+    list-type: blacklist
+    packages:
+      # logging is allowed only by logutils.Log, logrus
+      # is allowed to use only in logutils package
+      - github.com/sirupsen/logrus
+  misspell:
+    locale: US
+  lll:
+    line-length: 140
+  goimports:
+    local-prefixes: github.com/golangci/golangci-lint
+  gocritic:
+    enabled-tags:
+      - performance
+      - style
+      - experimental
+    disabled-checks:
+      - wrapperFunc
+      - yodaStyleExpr
+      - unnamedResult
+      # - dupImport # https://github.com/go-critic/go-critic/issues/845
+      - commentedOutCode
+      - importShadow
+      - appendCombine
+      - ifElseChain
+      - typeAssertChain
+      - builtinShadow
+  gosec:
+    excludes:
+      - G404
+      - G501
+      - G401
+  revive:
+    ignore-generated-header: true
+    severity: warning
+    rules:
+      - name: atomic
+      - name: line-length-limit
+        severity: error
+        arguments: [140]
+
+linters:
+  # enable:
+  #   - errcheck
+  #   - goimports
+  #   - golint
+  #   - govet
+  #   - staticcheck
+  #   - gocyclo
+  #   - maligned
+  #   - goconst
+  #   - depguard
+  #   - misspell
+  #   - lll
+  #   - gocritic
+  # disable-all: true
+  enable:
+    - gocritic
+    - gocyclo
+    - lll
+    - goconst
+    - misspell
+    - govet
+    - errcheck
+    - staticcheck
+    - unused
+    - maligned
+    - gosimple
+    - structcheck
+    - varcheck
+    - ineffassign
+    - deadcode
+    - typecheck
+    - golint
+    - gosec
+    - unconvert
+    - goimports
+    - depguard
+    - prealloc
+    - scopelint
+    - whitespace
+    - revive
+
+run:
+  # default concurrency is a available CPU number
+  concurrency: 20
+
+  # timeout for analysis, e.g. 30s, 5m, default is 1m
+  deadline: 10m
+
+  # exit code when at least one issue was found, default is 1
+  issues-exit-code: 1
+  # include test files or not, default is true
+  tests: false
+
+  skip-dirs:
+    - test
+    # - vendor/(checker|passes)
+    # - third_party/(checker|passes)
+golint:
+  # minimal confidence for issues, default is 0.8
+  min-confidence: 0.5
+issues:
+  exclude-use-default: true
+  max-issues-per-linter: 10
+  max-same-issues: 0
+  # exclude:
+  #   - EXC0002
+# golangci.com configuration
+# https://github.com/golangci/golangci/wiki/Configuration
+# service:
+#   golangci-lint-version: 1.17.x # use the fixed version to not introduce new linters unexpectedly
+#   prepare:
+#     - echo "here I can run custom commands, but no preparation needed for this repo"

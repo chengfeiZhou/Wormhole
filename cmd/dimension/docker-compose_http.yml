@@ -1,0 +1,19 @@
+version: '3.8'
+services:
+  wormhole-dimension:
+    container_name: wormhole-dimension
+    image: wormhole-dimension:main-alph
+    privileged: true
+    restart: always
+    environment:
+      "WORMHOLE_ISDEBUG": "true"
+      "WORMHOLE_CHANNELSIZE": "10"
+      # fs
+      "WORMHOLE_HANDLINGPATH": "/build/tmp"
+      "WORMHOLE_SCANINTERVAL": "3"
+      # http 转发目标
+      "WORMHOLE_BIND": "10.11.12.35"
+      "WORMHOLE_HTTPTIMEOUT": "5"
+    volumes:
+      - /root/wormhole/handlingPath:/build/tmp
+    command: ["http", "file"]
