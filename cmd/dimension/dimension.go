@@ -10,7 +10,8 @@ import (
 	msghandling "github.com/chengfeiZhou/Wormhole/internal/app/bridge/message_handling"
 	skiphandler "github.com/chengfeiZhou/Wormhole/internal/app/bridge/skip_handler"
 	"github.com/chengfeiZhou/Wormhole/internal/app/dimension"
-	httpclient "github.com/chengfeiZhou/Wormhole/internal/app/dimension/dimension/http_client"
+	httpclient "github.com/chengfeiZhou/Wormhole/internal/app/dimension/http_client"
+	kafkaproducer "github.com/chengfeiZhou/Wormhole/internal/app/dimension/kafka_producer"
 	"github.com/chengfeiZhou/Wormhole/pkg/logger"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
@@ -23,12 +24,14 @@ func main() {
 	go func() {
 		app := gin.Default()
 		pprof.Register(app) // 性能
-		app.Run(":3000")
+		if err := app.Run(":3000"); err != nil {
+			panic(err)
+		}
 	}()
 	app := dimension.NewApp(filepath.Base(os.Args[0]))
 	// 注册 Module
 	app.AddModule(new(httpclient.Adapter))
-	// app.AddModule(new(kafkaproducer.Adapter))
+	app.AddModule(new(kafkaproducer.Adapter))
 	// 注册Bridge
 	app.AddBridge(new(msghandling.Reader))
 	app.AddBridge(new(skiphandler.Reader))

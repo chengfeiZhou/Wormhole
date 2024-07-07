@@ -18,10 +18,14 @@ type Field struct {
 	Key   string
 }
 
+// MakeField 函数接收两个参数，一个字符串类型的key和一个空接口类型的value，
+// 返回一个Field类型的结构体，该结构体包含Key和Value两个字段，分别对应传入的key和value。
 func MakeField(k string, v interface{}) Field {
 	return Field{Key: k, Value: v}
 }
 
+// ErrorField 函数接收一个 error 类型的 err 参数，返回一个 Field 结构体
+// 如果 err 不为 nil，则返回的 Field 结构体中的 Key 字段为 "error"，Value 字段为 err
 func ErrorField(err error) (f Field) {
 	return Field{Key: "error", Value: err}
 }
@@ -70,16 +74,25 @@ type AppLogger struct {
 // 	mux.HandleFunc("/logger/level", applg.level.ServeHTTP)
 // }
 
-// SetLevel: 维护日志级别的方法
-// 使用一个配置接口维护这个方法
+// SetLevel 方法用于设置 AppLogger 的日志级别
+//
+// 参数：
+//
+//	l Level - 要设置的日志级别
+//
+// 返回值：
+//
+//	无返回值
 func (applg *AppLogger) SetLevel(l Level) {
 	applg.level.SetLevel(zapcore.Level(l))
 }
 
-// GetLevel 获取logger的等级
+// GetLevel 返回AppLogger的日志级别，返回值为字符串类型
 func (applg *AppLogger) GetLevel() string {
 	return applg.level.Level().CapitalString()
 }
+
+// Log 方法返回AppLogger结构体中的zap.Logger实例指针
 func (applg *AppLogger) Log() *zap.Logger {
 	return applg.lg
 }
