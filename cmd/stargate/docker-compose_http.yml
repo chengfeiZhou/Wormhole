@@ -1,0 +1,22 @@
+version: '3.8'
+services:
+  wormhole-stargate:
+    container_name: wormhole-stargate
+    image: wormhole-stargate:main-a5518602-build40831-1.0-alph
+    privileged: true
+    restart: always
+    ports:
+      - 8080:8080
+    volumes:
+      - /root/wormhole/handlingPath:/build/tmp
+    environment:
+      WORMHOLE_ISDEBUG: "true"
+      WORMHOLE_CHANNELSIZE: "10"
+      # fs
+      WORMHOLE_HANDLINGPATH: "/build/tmp"
+      WORMHOLE_WRITERTICK: "10"
+      WORMHOLE_FILEMAXSIZE: "10485760"
+      # http server
+      WORMHOLE_LISTEN: "0.0.0.0:8080"
+    command: ["http", "file"]
+    
