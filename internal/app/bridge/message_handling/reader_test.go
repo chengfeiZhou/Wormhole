@@ -57,7 +57,7 @@ func TestRenameReadyFile(t *testing.T) {
 type MainSuite struct {
 	suite.Suite
 	reader  *Reader
-	msgChan chan<- interface{}
+	msgChan chan<- []byte
 }
 
 func Test_MainSuite(t *testing.T) {
@@ -70,9 +70,8 @@ func transformTestfunc([]byte) (structs.Message, error) {
 }
 
 func (s *MainSuite) BeforeTest(suiteName, testName string) {
-	s.msgChan = make(chan<- interface{}, 3)
+	s.msgChan = make(chan<- []byte, 3)
 	s.reader = NewReader(
-		transformTestfunc,
 		s.msgChan,
 		WithLoggerToRead(logger.NopLogger()),
 		WithHandlingPathToRead(os.TempDir()),

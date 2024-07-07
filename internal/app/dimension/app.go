@@ -11,15 +11,15 @@ import (
 
 type Module interface {
 	GetName() string
-	Setup(*App, <-chan interface{}) error
+	Setup(*App, <-chan []byte) error
 	Run(context.Context) error
-	Help()
 	Transform() structs.TransMessage
+	Help()
 }
 
 type Bridge interface {
 	GetName() string
-	Setup(*App, chan<- interface{}, structs.TransMessage) error
+	Setup(*App, chan<- []byte) error
 	Run(context.Context) error
 	Help()
 }
@@ -27,7 +27,7 @@ type Bridge interface {
 // nolint
 type App struct {
 	name    string            // 服务名称
-	msg     chan interface{}  // modules => bridge 传输数据的channel
+	msg     chan []byte       // modules => bridge 传输数据的channel
 	modules map[string]Module // 注册的 Module
 	bridges map[string]Bridge // 注册的 Bridge
 	module  Module            // 被实例化的Module
@@ -119,11 +119,11 @@ func (app *App) Setup(ctx context.Context, module, bridge string, args []string)
 			app.Logger = log
 		}
 	}
-	app.msg = make(chan interface{}, app.Config.ChannelSize)
+	app.msg = make(chan []byte, app.Config.ChannelSize)
 	if err := app.module.Setup(app, app.msg); err != nil {
 		return err
 	}
-	if err := app.bridge.Setup(app, app.msg, app.module.Transform()); err != nil {
+	if err := app.bridge.Setup(app, app.msg); err != nil {
 		return err
 	}
 	return nil
