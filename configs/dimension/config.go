@@ -23,24 +23,6 @@ type Config struct {
 	KafkaUser      string   `json:"kafkaUser"`      // 用户名
 	KafkaPasswd    string   `json:"kafkaPasswd"`    // 密码
 	KafkaMechanism string   `json:"kafkaMechanism"` // 加密算法
-	// OSS s3
-	S3AccessKey string `json:"s3AccessKey"` // "KMAR2KOggM7IBQ53"
-	S3SecretKey string `json:"s3SecretKey"` // "0ug0HBOy2ZLe5UphgFMc94mlQKayLEzS"
-	S3Regions   string `json:"s3Regions"`   // "defaultRegion"
-	S3Addr      string `json:"s3Addr"`      // "http://172.16.20.30:9000"
-
-	// etcd
-	EtcdEndpoints []string `json:"etcdEndpoints"`
-	EtcdUser      string   `json:"etcdUser"`
-	EtcdPasswd    string   `json:"etcdPasswd"`
-	EtcdTTL       int64    `json:"etcdTTL"`     // key超时
-	EtcdKeepTTL   int      `json:"etcdKeepTTL"` // key保活
-
-	// serviceInfo
-	NodeID        string   `json:"nodeID"`
-	NodeNamespace string   `json:"nodeNamespace"`
-	NodeLabels    []string `json:"nodeLabels"`
-	NodeIP        string   `json:"nodeIP"`
 }
 
 /*

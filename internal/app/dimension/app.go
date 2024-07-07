@@ -11,15 +11,15 @@ import (
 
 type Module interface {
 	GetName() string
-	Setup(*App, <-chan interface{}) error
+	Setup(*App, <-chan []byte) error
 	Run(context.Context) error
-	Help()
 	Transform() structs.TransMessage
+	Help()
 }
 
 type Bridge interface {
 	GetName() string
-	Setup(*App, chan<- interface{}, structs.TransMessage) error
+	Setup(*App, chan<- []byte) error
 	Run(context.Context) error
 	Help()
 }
@@ -27,7 +27,7 @@ type Bridge interface {
 // nolint
 type App struct {
 	name    string            // 服务名称
-	msg     chan interface{}  // modules => bridge 传输数据的channel
+	msg     chan []byte       // modules => bridge 传输数据的channel
 	modules map[string]Module // 注册的 Module
 	bridges map[string]Bridge // 注册的 Bridge
 	module  Module            // 被实例化的Module
@@ -38,13 +38,25 @@ type App struct {
 
 type OptionFunc func(*App)
 
+// WithLogger 是一个函数选项，用于设置App实例的Logger字段。
+// 它接收一个logger.Logger类型的参数log，并返回一个OptionFunc类型的函数。
+// 这个返回的OptionFunc函数在调用时会将传入的log设置到App实例的Logger字段中。
 func WithLogger(log logger.Logger) OptionFunc {
 	return func(a *App) {
 		a.Logger = log
 	}
 }
 
-// NewApp 实例化stargate
+// NewApp 创建一个新的App实例
+//
+// 参数：
+//
+//	name: string - 应用名称
+//	ops:  ...OptionFunc - 可选参数列表，用于配置App实例
+//
+// 返回值：
+//
+//	*App - 返回一个指向新创建的App实例的指针
 func NewApp(name string, ops ...OptionFunc) *App {
 	app := &App{
 		Logger: logger.DefaultLogger(),
@@ -62,11 +74,20 @@ func NewApp(name string, ops ...OptionFunc) *App {
 	return app
 }
 
+// Help 方法用于输出帮助信息
 func (app *App) Help() {
 	// TODO: 研究一下go的模板怎么写
 	fmt.Println("help")
 }
 
+// GetModules 返回App结构体中modules字段中所有模块的名称切片
+// 参数：
+//
+//	app *App - App结构体指针
+//
+// 返回值：
+//
+//	modules []string - 包含所有模块名称的字符串切片
 func (app *App) GetModules() (modules []string) {
 	for name := range app.modules {
 		modules = append(modules, name)
@@ -74,6 +95,13 @@ func (app *App) GetModules() (modules []string) {
 	return
 }
 
+// GetBridges 返回App结构体中所有桥接器的名称列表
+//
+// 参数:
+//   - app: App结构体指针，表示要获取桥接器名称列表的应用实例
+//
+// 返回值:
+//   - bridges: []string类型，表示桥接器名称的列表
 func (app *App) GetBridges() (bridges []string) {
 	for name := range app.bridges {
 		bridges = append(bridges, name)
@@ -81,19 +109,51 @@ func (app *App) GetBridges() (bridges []string) {
 	return
 }
 
-// AddModule 对指定模块进行初始化
+// AddModule 方法用于向App实例中添加一个模块
+//
+// 参数：
+//
+//	m Module：要添加的模块，需要实现Module接口
+//
+// 返回值：
+//
+//	无
 func (app *App) AddModule(m Module) {
 	app.modules[m.GetName()] = m
 	app.Logger.Info("module registered", logger.MakeField("module", m.GetName()))
 }
 
-// AddModule 对指定模块进行初始化
+// AddBridge 向应用程序中添加一个桥接模块
+//
+// 参数：
+//
+//	app *App - 应用程序实例指针
+//	b Bridge - 要添加的桥接模块
+//
+// 返回值：
+//
+//	无
+//
+// 功能：
+//  1. 将传入的桥接模块 b 存储到应用程序实例 app 的 bridges 字段中，键为桥接模块的名称（通过 b.GetName() 获取）
+//  2. 使用 Logger 输出一条日志信息，记录桥接模块已经注册，包含桥接模块的名称作为日志字段
 func (app *App) AddBridge(b Bridge) {
 	app.bridges[b.GetName()] = b
 	app.Logger.Info("bridge module registered", logger.MakeField("bridge", b.GetName()))
 }
 
-// Setup 实例化
+// Setup 用于初始化App对象，并设置发送模块、转移模块以及配置信息
+//
+// 参数：
+//
+//	ctx context.Context：上下文对象
+//	module string：发送模块名称
+//	bridge string：转移模块名称
+//	args []string：配置参数列表
+//
+// 返回值：
+//
+//	error：如果设置过程中发生错误，则返回非零的错误码；否则返回nil
 func (app *App) Setup(ctx context.Context, module, bridge string, args []string) error {
 	var (
 		ok  bool
@@ -119,17 +179,19 @@ func (app *App) Setup(ctx context.Context, module, bridge string, args []string)
 			app.Logger = log
 		}
 	}
-	app.msg = make(chan interface{}, app.Config.ChannelSize)
+	app.msg = make(chan []byte, app.Config.ChannelSize)
 	if err := app.module.Setup(app, app.msg); err != nil {
 		return err
 	}
-	if err := app.bridge.Setup(app, app.msg, app.module.Transform()); err != nil {
+	if err := app.bridge.Setup(app, app.msg); err != nil {
 		return err
 	}
 	return nil
 }
 
-// Run 执行接收
+// Run 启动App的运行
+// ctx 用于控制应用程序的生命周期，可用来在App运行期间传递信号或取消操作
+// 返回值error表示启动过程中是否出现错误
 func (app *App) Run(ctx context.Context) error {
 	signal := make(chan error)
 	go func() {
